@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gelişmiş Nesne Algılama</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <style>
+        body { font-family: 'Arial', sans-serif; text-align: center; margin: 0; background: #121212; color: white; }
+        h1 { color: #ffcc00; padding: 10px; }
+        #uploadBtn { margin: 10px; padding: 10px 20px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer; background: #ffcc00; color: black; }
+        #uploadBtn:hover { background: #ffdd44; }
+        #canvas { display: block; margin: 20px auto; border: 3px solid #ffcc00; background: black; max-width: 90%; }
+        .results-box { width: 80%; background: #222; padding: 15px; margin: auto; border-radius: 8px; box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.1); }
+        h2 { font-size: 18px; background: #ffcc00; color: black; padding: 5px; text-align: center; border-radius: 5px; }
+        .coco-results { color: #ff4444; font-size: 14px; white-space: pre-wrap; text-align: left; }
+        #sentence { font-size: 16px; font-weight: bold; color: #ffcc00; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <h1>Gelişmiş Nesne Algılama</h1>
+    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+    <button id="uploadBtn" onclick="document.getElementById('imageInput').click()">Resim Yükle</button>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="results-box">
+        <h2>Algılanan Nesneler</h2>
+        <p id="cocoResult" class="coco-results"></p>
+        <p id="sentence"></p>
+    </div>
+
+    <script>
+    let canvas = document.getElementById("canvas");
+    let ctx = canvas.getContext("2d");
+    let cocoModel;
+    let detectedObjects = [];
+
+    async function loadModels() {
+        cocoModel = await cocoSsd.load();
+        console.log("COCO-SSD Modeli yüklendi!");
+    }
+
+    document.getElementById("imageInput").addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            img.onload = async () => {
+                const maxWidth = 1000;
+                const maxHeight = 800;
+
+                let scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+                let newWidth = img.width * scale;
+                let newHeight = img.height * scale;
+
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+                await analyzeImage();
+            };
+        }
+    });
+
+    async function analyzeImage() {
+        let resultsText = "";
+        let sentenceText = "Bu resimde ";
+        detectedObjects = [];
+
+        let predictions = await cocoModel.detect(canvas);
+
+        let foundObjects = [];
+        let humanData = [];
+
+        predictions.forEach(prediction => {
+            if (prediction.score < 0.3) return;
+
+            let [x, y, width, height] = prediction.bbox;
+
+            ctx.strokeStyle = "#ffcc00";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x, y, width, height);
+            drawBubble(x, y, prediction.class, (prediction.score * 100).toFixed(1));
+
+            resultsText += `🟡 ${prediction.class} - Güven: ${(prediction.score * 100).toFixed(1)}%\n`;
+            detectedObjects.push({ name: prediction.class, confidence: prediction.score, x, y });
+
+            if (prediction.class === "person") {
+                humanData.push(getHumanContext(x, y, width, height));  // Bağlantılı cümleyi oluştur
+            } else {
+                foundObjects.push(prediction.class);
+            }
+        });
+
+        // Cümle oluştur
+        sentenceText += generateSentence(humanData, foundObjects);
+
+        document.getElementById("cocoResult").innerText = resultsText;
+        document.getElementById("sentence").innerText = sentenceText;
+    }
+
+    function drawBubble(x, y, text, confidence) {
+        ctx.fillStyle = "black";
+        ctx.fillRect(x - 2, y - 30, ctx.measureText(text).width + 20, 25);
+        ctx.fillStyle = "yellow";
+        ctx.font = "14px Arial";
+        ctx.fillText(`${text} (${confidence}%)`, x + 5, y - 10);
+    }
+
+    // Kişiye göre bağlamlı cümle üret
+    function getHumanContext(x, y, width, height) {
+        if (height < 100) {
+            return "oynayan bir çocuk";
+        } else if (height > 180) {
+            return "yolculuğa hazırlanan bir adam";
+        } else {
+            return "araba süren bir kadın";
+        }
+    }
+
+    // Nesnelerle bağlamlı cümle oluşturma
+    function generateSentence(humanData, foundObjects) {
+        let sentence = "";
+
+        if (humanData.length > 0) {
+            sentence += humanData.join(", ") + " var. ";
+        }
+
+        if (foundObjects.length > 0) {
+            sentence += foundObjects.join(", ") + " var.";
+        } else {
+            sentence = "Resimde sadece insanlar var.";
+        }
+
+        return sentence;
+    }
+
+    loadModels();
+    </script>
+</body>
+</html>
