@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Uygulaması</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000; /* Arka plan siyah */
+            color: #fff; /* Metin rengi beyaz */
+        }
+
+        #chat-container {
+            width: 400px;
+            height: 600px;
+            margin: 50px auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #1e1e1e; /* Koyu gri arka plan */
+            display: flex;
+            flex-direction: column;
+            display: none; /* İlk başta gizli */
+        }
+
+        #messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 15px;
+            max-width: 70%;
+            position: relative; /* İçerik konumlandırması için */
+            word-wrap: break-word; /* Uzun kelimeleri kır */
+        }
+
+        .message.sent {
+            background-color: #007bff; /* Gönderilen mesaj mavi */
+            align-self: flex-end;
+        }
+
+        .username {
+            font-size: 12px; /* Küçük yazı boyutu */
+            color: #fff; /* Kullanıcı adı rengi */
+            margin-bottom: 5px; /* Kullanıcı adı ile mesaj arasında boşluk */
+        }
+
+        #input-container {
+            display: flex;
+            padding: 10px;
+            background-color: #1e1e1e; /* Koyu gri arka plan */
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            margin-right: 10px;
+            background-color: #333; /* Giriş kutusu arka planı */
+            color: #fff; /* Giriş kutusu metin rengi */
+        }
+
+        #send-button {
+            background-color: #007bff; /* Buton mavi */
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        #send-button:hover {
+            background-color: #0056b3; /* Buton hover durumu */
+        }
+
+        #login-container {
+            width: 300px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        #username-input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            background-color: #333; /* Giriş kutusu arka planı */
+            color: #fff; /* Giriş kutusu metin rengi */
+        }
+
+        #login-button {
+            background-color: #007bff; /* Buton mavi */
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="login-container">
+        <h2>Hesap Aç</h2>
+        <input type="text" id="username-input" placeholder="Kullanıcı Adı" />
+        <button id="login-button">Hesap Aç</button>
+    </div>
+    <div id="chat-container">
+        <div id="messages"></div>
+        <div id="input-container">
+            <input type="text" id="message-input" placeholder="Mesaj yaz..." />
+            <button id="send-button">Gönder</button>
+        </div>
+    </div>
+    <script>
+        const loginContainer = document.getElementById('login-container');
+        const chatContainer = document.getElementById('chat-container');
+        const sendButton = document.getElementById('send-button');
+        const messageInput = document.getElementById('message-input');
+        const messagesContainer = document.getElementById('messages');
+        const usernameInput = document.getElementById('username-input');
+        const loginButton = document.getElementById('login-button');
+
+        // Mesajları saklamak için diziyi tanımla
+        let messages = JSON.parse(localStorage.getItem('messages')) || [];
+
+        // Mesajları ekrana getir
+        function renderMessages() {
+            messagesContainer.innerHTML = ''; // Öncelikle mevcut mesajları temizle
+            messages.forEach(message => {
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${message.type}`;
+                
+                // Kullanıcı adı etiketini oluştur
+                const usernameElement = document.createElement('div');
+                usernameElement.className = 'username';
+                usernameElement.textContent = message.username; // Kullanıcı adını ekle
+
+                messageElement.textContent = message.text;
+                messageElement.prepend(usernameElement); // Kullanıcı adını mesaj kutusunun üstüne ekle
+                messagesContainer.appendChild(messageElement);
+            });
+            messagesContainer.scrollTop = messagesContainer.scrollHeight; // En alta kaydır
+        }
+
+        // Kullanıcı girişini kontrol et
+        function checkLogin() {
+            const username = localStorage.getItem('username');
+            if (username) {
+                enterChat();
+            } else {
+                loginContainer.style.display = 'block';
+            }
+        }
+
+        // Kullanıcı hesabı oluştur
+        loginButton.addEventListener('click', () => {
+            const username = usernameInput.value;
+            if (username) {
+                localStorage.setItem('username', username);
+                enterChat();
+            }
+        });
+
+        // Sohbete geç
+        function enterChat() {
+            loginContainer.style.display = 'none';
+            chatContainer.style.display = 'flex';
+            renderMessages(); // Mevcut mesajları göster
+        }
+
+        sendButton.addEventListener('click', () => {
+            const message = messageInput.value;
+            const username = localStorage.getItem('username'); // Kullanıcı adını al
+            if (message) {
+                const newMessage = {
+                    text: message,
+                    type: 'sent',
+                    username: username // Kullanıcı adını da ekle
+                };
+                messages.push(newMessage);
+                localStorage.setItem('messages', JSON.stringify(messages)); // Mesajları localStorage'a kaydet
+                renderMessages(); // Mesajları güncelle
+
+                messageInput.value = ''; // Input'u temizle
+            }
+        });
+
+        // Uygulama başlatılırken kullanıcı kontrolü
+        checkLogin();
+    </script>
+</body>
+</html>
