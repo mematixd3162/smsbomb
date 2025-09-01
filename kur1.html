@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Görev Takip</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #cce0ff, #e0f7ff);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    h1 {
+      text-align: center;
+      color: #003366;
+      margin-bottom: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+    .input-group {
+      display: flex;
+      margin-bottom: 20px;
+    }
+    .input-group input {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #aaa;
+      border-radius: 8px 0 0 8px;
+      outline: none;
+      font-size: 14px;
+    }
+    .input-group button {
+      padding: 12px 18px;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    .input-group button:hover {
+      background: #0056b3;
+    }
+    .names-box {
+      background: #d9ecff;
+      padding: 15px;
+      border-radius: 15px;
+      min-height: 150px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+    }
+    .name-item {
+      background: #b3d9ff;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      position: relative;
+    }
+    .delete-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: #ff4d4d;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .tasks-box {
+      padding: 10px;
+      border-radius: 10px;
+      min-height: 50px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background: #e6f2ff;
+    }
+    .task-header {
+      background: #99ccff;
+      padding: 8px;
+      border-radius: 6px;
+      margin-top: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      user-select: none;
+      transition: 0.2s ease;
+    }
+    .task-header.done {
+      background: #2e7d32 !important;
+      color: #fff;
+    }
+    .task-header:hover {
+      background: #80bfff;
+    }
+    .task-items {
+      display: none;
+      margin-left: 10px;
+      margin-top: 5px;
+    }
+    .task-item {
+      background: #cce6ff;
+      padding: 5px 10px;
+      border-radius: 5px;
+      margin: 3px 0;
+      display: flex;
+      align-items: center;
+    }
+    .task-item input {
+      margin-right: 10px;
+    }
+    .task-item a {
+      color: #003366;
+      text-decoration: none;
+    }
+    .task-item a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Görev Takip Sistemi</h1>
+  <div class="container">
+    <div class="input-group">
+      <input type="text" id="nameInput" placeholder="İsim ekle...">
+      <button onclick="addName()">Ekle</button>
+    </div>
+    <div class="names-box" id="namesBox"></div>
+    <div class="tasks-box" id="tasksBox"></div>
+  </div>
+
+  <script>
+    const tasksTemplate = [
+      { type: "kitap", label: "Kitap Okuma", items: [
+        "Gençlik Rehberi",
+        "Beş Risale",
+        "Paygamberler Tarihi (Asım Köksal)",
+        "Düzceli Mehmed",
+        "Allah'ım Bana Namaz Kılmayı ve Şükretmeyi Nasip Et"
+      ]},
+      { type: "video", label: "Video İzleme", items: [
+        {name: "Video 1", link: "https://www.youtube.com/watch?v=ijnhdrm0dK0"},
+        {name: "Video 2", link: "https://youtu.be/kZNKHdok6Vo?si=iqhxJDlUTBnu60oo"},
+        {name: "Video 3", link: "https://youtu.be/JlEBAuVPtC0?si=sXhZ33JeR7jIGyn0"},
+        {name: "Video 4", link: "https://youtu.be/EGpsjlj84DM?si=qzXNqdP9QF73EZcJ"},
+        {name: "Video 5", link: "https://youtu.be/jCcIcaA5PL0?si=NB_bZ6Vvvt3xpTml"},
+        {name: "Video 6", link: "https://youtu.be/ajmOtGaiK6w?si=bL7RS_lw2Wfs9N_c"},
+        {name: "Video 7", link: "https://youtu.be/poQa78Xg6BU?si=d9dTTjb7UJILkltm"},
+        {name: "Video 8", link: "https://youtu.be/U1TUTsdKVog?si=IN4FghvzrkOvbgbQ"},
+        {name: "Video 9", link: "https://youtu.be/r1fcIcmlG6A?si=Txanqc7DDLE1zUwd"},
+        {name: "Video 10", link: "https://youtu.be/ZmcJneagHxE?si=wNOELCN1o4F_GAcT"}
+      ]},
+      { type: "film", label: "Film İzleme", items: [
+        {name: "Yunus Emre Bölüm 1", link: "#"},
+        {name: "Yunus Emre Bölüm 2", link: "#"},
+        {name: "Yunus Emre Bölüm 3", link: "#"},
+        {name: "Yunus Emre Bölüm 4", link: "#"},
+        {name: "Yunus Emre Bölüm 5", link: "#"},
+        {name: "Yunus Emre Bölüm 6", link: "#"},
+        {name: "Yunus Emre Bölüm 7", link: "#"},
+        {name: "Yunus Emre Bölüm 8", link: "#"},
+        {name: "Yunus Emre Bölüm 9", link: "#"},
+        {name: "Yunus Emre Bölüm 10", link: "#"}
+      ]},
+      { type: "ezber", label: "Ezber", items: ["Namaz Sureleri"]},
+      { type: "lugat", label: "Lugat", items: ["100"]},
+      { type: "mutalaa", label: "Mütalaa Verme", items: [
+        "1. söz","2. söz","3. söz","4. söz","5. söz","6. söz","7. söz","8 söz"
+      ]},
+      { type: "birebir", label: "Birebir Sohbet", items: [
+        "Gençlik Rehberi",
+        "1 Câzibedar bir fitne içinde bulunan ve daha aklını kaybetmeyen bazı gençlerde bir muhâveredir",
+        "2 Bir zaman eskişehir hapishanesinin pencerensinde oturmuştum",
+        "3 Birden ihtar edilen bir mes'ele-i mühimme",
+        "4 Birkaç bıcare gençlere verilen bir tenbih bir ders ve bir ihtârdır",
+        "5 Risâle-i nûr talebeleri tarafından sorulan bir suâle cevab",
+        "6 Leyle-i kadir'de ihtâr edilen bir mes'ele-i mühimme",
+        "7 Yedinci recâ",
+        "8 Altıncı mesele",
+        "9 Dokuzuncu şuâ'",
+        "10 Hüve nuktesi",
+        "11 Siyah dutun bir meyvesi ve gençlik rehberi sonuna kadar",
+        "12 Dua"
+      ]}
+    ];
+
+    let data = JSON.parse(localStorage.getItem("gorevData")) || {};
+    let currentName = null;
+
+    function saveData() { localStorage.setItem("gorevData", JSON.stringify(data)); }
+
+    function addName() {
+      const input = document.getElementById("nameInput");
+      const name = input.value.trim();
+      if(!name) return;
+      if(!data[name]){
+        data[name] = tasksTemplate.map(t => ({...t, done: t.items.map(i=>false)}));
+        saveData();
+        renderNames();
+      }
+      input.value="";
+    }
+
+    function deleteName(name){
+      delete data[name];
+      if(currentName===name){
+        currentName=null;
+        document.getElementById("tasksBox").innerHTML="";
+      }
+      saveData();
+      renderNames();
+    }
+
+    function toggleTask(name, taskIndex, itemIndex){
+      data[name][taskIndex].done[itemIndex] = !data[name][taskIndex].done[itemIndex];
+      saveData();
+      renderTasks(name);
+    }
+
+    function renderNames(){
+      const namesBox = document.getElementById("namesBox");
+      namesBox.innerHTML="";
+      for(let name in data){
+        const div = document.createElement("div");
+        div.className="name-item";
+        div.textContent=name;
+
+        const delBtn=document.createElement("button");
+        delBtn.textContent="Sil";
+        delBtn.className="delete-btn";
+        delBtn.onclick=(e)=>{
+          e.stopPropagation();
+          deleteName(name);
+        }
+        div.appendChild(delBtn);
+
+        div.addEventListener("click",()=>{
+          currentName=name;
+          renderTasks(name);
+        });
+
+        namesBox.appendChild(div);
+      }
+    }
+
+    function renderTasks(name){
+      const tasksBox = document.getElementById("tasksBox");
+
+      // burada getComputedStyle kullanıyoruz; böylece CSS ile gizlenmiş elemanlar doğru algılanır
+      const prevOpen = Array.from(tasksBox.querySelectorAll('.task-items'))
+        .map(el => getComputedStyle(el).display !== 'none');
+
+      tasksBox.innerHTML="";
+
+      data[name].forEach((taskObj, tIndex)=>{
+        const header = document.createElement("div");
+        header.className="task-header";
+        header.textContent=taskObj.label;
+
+        if (Array.isArray(taskObj.done) && taskObj.done.length && taskObj.done.every(Boolean)) {
+          header.classList.add("done");
+        } else {
+          header.classList.remove("done");
+        }
+
+        const itemsContainer = document.createElement("div");
+        itemsContainer.className="task-items";
+
+        // açık/kapalıyı prevOpen dizisinden kesin olarak uygula (true -> block, false -> none)
+        if (prevOpen[tIndex]) {
+          itemsContainer.style.display = "block";
+        } else {
+          itemsContainer.style.display = "none";
+        }
+
+        taskObj.items.forEach((item,i)=>{
+          const itemDiv=document.createElement("label");
+          itemDiv.className="task-item";
+
+          const checkbox=document.createElement("input");
+          checkbox.type="checkbox";
+          checkbox.checked=taskObj.done[i];
+
+          // bubbling'i kes, sadece checkbox'ın işi olsun
+          checkbox.addEventListener("click", e => e.stopPropagation());
+          checkbox.addEventListener("change",(e)=>{
+            e.stopPropagation();
+            toggleTask(name,tIndex,i);
+          });
+
+          const span=document.createElement("span");
+          if(typeof item==="string") {
+            span.textContent=item;
+          } else {
+            const link=document.createElement("a");
+            link.href=item.link;
+            link.target="_blank";
+            link.textContent=item.name;
+            link.addEventListener("click", e => e.stopPropagation());
+            span.appendChild(link);
+          }
+
+          itemDiv.appendChild(checkbox);
+          itemDiv.appendChild(span);
+          itemsContainer.appendChild(itemDiv);
+        });
+
+        header.addEventListener("click",()=>{
+          // toggle yaparken inline style ile net kontrol
+          itemsContainer.style.display = itemsContainer.style.display === "none" ? "block" : "none";
+        });
+
+        tasksBox.appendChild(header);
+        tasksBox.appendChild(itemsContainer);
+      });
+    }
+
+    renderNames();
+  </script>
+</body>
+</html>
