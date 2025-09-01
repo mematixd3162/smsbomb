@@ -2,28 +2,50 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Görev Takip</title>
   <style>
+    :root {
+      --primary-color: #007bff;
+      --primary-hover: #0056b3;
+      --danger-color: #ff4d4d;
+      --light-bg: #e0f7ff;
+      --card-bg: #d9ecff;
+      --item-bg: #b3d9ff;
+      --task-bg: #e6f2ff;
+      --task-item-bg: #cce6ff;
+      --done-color: #2e7d32;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
     body {
       font-family: Arial, sans-serif;
       background: linear-gradient(135deg, #cce0ff, #e0f7ff);
       margin: 0;
-      padding: 20px;
+      padding: 15px;
       min-height: 100vh;
     }
+    
     h1 {
       text-align: center;
       color: #003366;
       margin-bottom: 20px;
+      font-size: 1.5rem;
     }
+    
     .container {
-      max-width: 600px;
+      max-width: 100%;
       margin: auto;
     }
+    
     .input-group {
       display: flex;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
+    
     .input-group input {
       flex: 1;
       padding: 12px;
@@ -31,93 +53,157 @@
       border-radius: 8px 0 0 8px;
       outline: none;
       font-size: 14px;
+      min-width: 0; /* Flexbox'ta taşmayı önler */
     }
+    
     .input-group button {
-      padding: 12px 18px;
+      padding: 12px 15px;
       border: none;
-      background: #007bff;
+      background: var(--primary-color);
       color: white;
       border-radius: 0 8px 8px 0;
       cursor: pointer;
       font-weight: bold;
       transition: 0.3s;
+      white-space: nowrap;
     }
+    
     .input-group button:hover {
-      background: #0056b3;
+      background: var(--primary-hover);
     }
+    
     .names-box {
-      background: #d9ecff;
+      background: var(--card-bg);
       padding: 15px;
       border-radius: 15px;
       min-height: 150px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       margin-bottom: 15px;
     }
+    
     .name-item {
-      background: #b3d9ff;
+      background: var(--item-bg);
       margin: 5px 0;
-      padding: 10px;
+      padding: 10px 40px 10px 10px;
       border-radius: 8px;
       cursor: pointer;
       position: relative;
+      word-break: break-word;
     }
+    
     .delete-btn {
       position: absolute;
       right: 10px;
-      top: 10px;
-      background: #ff4d4d;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--danger-color);
       color: white;
       border: none;
-      padding: 4px 8px;
+      padding: 5px 10px;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 12px;
     }
+    
     .tasks-box {
       padding: 10px;
       border-radius: 10px;
       min-height: 50px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      background: #e6f2ff;
+      background: var(--task-bg);
     }
+    
     .task-header {
       background: #99ccff;
-      padding: 8px;
+      padding: 12px;
       border-radius: 6px;
-      margin-top: 5px;
+      margin-top: 8px;
       cursor: pointer;
       font-weight: bold;
       user-select: none;
       transition: 0.2s ease;
+      font-size: 0.95rem;
     }
+    
     .task-header.done {
-      background: #2e7d32 !important;
+      background: var(--done-color) !important;
       color: #fff;
     }
+    
     .task-header:hover {
       background: #80bfff;
     }
+    
     .task-items {
       display: none;
-      margin-left: 10px;
-      margin-top: 5px;
+      margin-left: 5px;
+      margin-top: 8px;
+      padding-left: 0;
     }
+    
     .task-item {
-      background: #cce6ff;
-      padding: 5px 10px;
+      background: var(--task-item-bg);
+      padding: 10px;
       border-radius: 5px;
-      margin: 3px 0;
+      margin: 5px 0;
       display: flex;
       align-items: center;
     }
+    
     .task-item input {
       margin-right: 10px;
+      flex-shrink: 0;
     }
+    
     .task-item a {
       color: #003366;
       text-decoration: none;
+      word-break: break-all;
     }
+    
     .task-item a:hover {
       text-decoration: underline;
+    }
+    
+    /* Mobil için medya sorguları */
+    @media (min-width: 768px) {
+      .container {
+        max-width: 600px;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .input-group {
+        flex-direction: column;
+      }
+      
+      .input-group input {
+        border-radius: 8px;
+        margin-bottom: 8px;
+      }
+      
+      .input-group button {
+        border-radius: 8px;
+        width: 100%;
+      }
+      
+      .name-item {
+        padding: 12px 45px 12px 12px;
+      }
+      
+      .task-header {
+        padding: 10px;
+        font-size: 0.9rem;
+      }
+      
+      .task-item {
+        padding: 8px;
+        font-size: 0.9rem;
+      }
     }
   </style>
 </head>
@@ -205,13 +291,15 @@
     }
 
     function deleteName(name){
-      delete data[name];
-      if(currentName===name){
-        currentName=null;
-        document.getElementById("tasksBox").innerHTML="";
+      if(confirm("'" + name + "' isimli kişiyi silmek istediğinize emin misiniz?")) {
+        delete data[name];
+        if(currentName===name){
+          currentName=null;
+          document.getElementById("tasksBox").innerHTML="";
+        }
+        saveData();
+        renderNames();
       }
-      saveData();
-      renderNames();
     }
 
     function toggleTask(name, taskIndex, itemIndex){
@@ -249,7 +337,7 @@
     function renderTasks(name){
       const tasksBox = document.getElementById("tasksBox");
 
-      // burada getComputedStyle kullanıyoruz; böylece CSS ile gizlenmiş elemanlar doğru algılanır
+      // Önceki açık/kapalı durumları sakla
       const prevOpen = Array.from(tasksBox.querySelectorAll('.task-items'))
         .map(el => getComputedStyle(el).display !== 'none');
 
@@ -269,7 +357,7 @@
         const itemsContainer = document.createElement("div");
         itemsContainer.className="task-items";
 
-        // açık/kapalıyı prevOpen dizisinden kesin olarak uygula (true -> block, false -> none)
+        // Önceki durumu uygula
         if (prevOpen[tIndex]) {
           itemsContainer.style.display = "block";
         } else {
@@ -284,7 +372,6 @@
           checkbox.type="checkbox";
           checkbox.checked=taskObj.done[i];
 
-          // bubbling'i kes, sadece checkbox'ın işi olsun
           checkbox.addEventListener("click", e => e.stopPropagation());
           checkbox.addEventListener("change",(e)=>{
             e.stopPropagation();
@@ -309,7 +396,6 @@
         });
 
         header.addEventListener("click",()=>{
-          // toggle yaparken inline style ile net kontrol
           itemsContainer.style.display = itemsContainer.style.display === "none" ? "block" : "none";
         });
 
@@ -318,7 +404,15 @@
       });
     }
 
-    renderNames();
+    // Sayfa yüklendiğinde isimleri render et
+    document.addEventListener('DOMContentLoaded', renderNames);
+    
+    // Enter tuşu ile isim ekleme
+    document.getElementById('nameInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        addName();
+      }
+    });
   </script>
 </body>
 </html>
